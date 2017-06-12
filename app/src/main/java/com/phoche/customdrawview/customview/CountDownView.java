@@ -1,11 +1,15 @@
 package com.phoche.customdrawview.customview;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.View;
+
+
+import com.phoche.customdrawview.R;
 
 import java.util.Calendar;
 import java.util.TimeZone;
@@ -15,6 +19,7 @@ public class CountDownView extends View {
     private static final String sWAITSTATUS = "距开始  ";
     private static final String sENDSOONSTATUS = "还剩  ";
     private static final String[] sTIMEARRS = {"时", "分", "秒"};
+    private static final int sDEFAULT_TEXTSIZE = 20;
 
     // 倒计时背景色
     private int mTimeBackground = 0xFF4A4A4A;
@@ -25,9 +30,11 @@ public class CountDownView extends View {
     // 间距
     private int mOffSetX = 6;
 
+
     private boolean[] mNeedDraw = {true, true, true};
     private String[] mTimeArrs = new String[]{"00", "00", "00"};
 
+    private int mTextSize = sDEFAULT_TEXTSIZE;
     // 1 ---- 未开始 ,  0 ------  快结束
     private int mShowStatus = 1;
 
@@ -36,21 +43,35 @@ public class CountDownView extends View {
     private int mWidth;
     private int mHeight;
 
-//    private Context mContext;
 
     public CountDownView(Context context) {
         this(context, null);
-
     }
 
     public CountDownView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
+        init();
     }
 
     public CountDownView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-//        this.mContext = context;
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.CountDownView);
+
+        mTextSize = (int) typedArray.getDimension(R.styleable.CountDownView_cdv_textsize,
+                mTextSize);
+        mTimeTextColor = typedArray.getColor(R.styleable.CountDownView_cdv_countdowncolor,
+                mTimeTextColor);
+        mTimeBackground = typedArray.getColor(R.styleable.CountDownView_cdv_rectbgcolor,
+                mTimeBackground);
+
+        typedArray.recycle();
+
     }
+
+    private void init() {
+        mPaint.setTextSize(mTextSize);
+    }
+
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -62,15 +83,14 @@ public class CountDownView extends View {
 
     private int measureHeight(int heightMeasureSpec) {
         int result = 0;
+        int defaultHeight = (int) (getPaddingTop() + getPaddingBottom() + mPaint.measureText
+                        (sENDSOONSTATUS));
         int mode = MeasureSpec.getMode(heightMeasureSpec);
         int size = MeasureSpec.getSize(heightMeasureSpec);
         if (mode == MeasureSpec.EXACTLY) {
             result = size;
         } else {
-            result = getPaddingTop() + getPaddingBottom() + mHeight;
-            if (mode == MeasureSpec.AT_MOST) {
-                result = 30;
-            }
+            result = defaultHeight;
         }
         return result;
     }
@@ -78,7 +98,7 @@ public class CountDownView extends View {
     private int measureWidth(int widthMeasureSpec) {
         int result = 0;
         float defaultWidth;
-        mPaint.setTextSize(20);
+
         if (mShowStatus == 0) {
             defaultWidth = mPaint.measureText(sENDSOONSTATUS);
         } else {
@@ -97,10 +117,7 @@ public class CountDownView extends View {
         if (mode == MeasureSpec.EXACTLY) {
             result = size;
         } else {
-            result = getPaddingLeft() + getPaddingRight() + mWidth;
-            if (mode == MeasureSpec.AT_MOST) {
-                result = (int) defaultWidth;
-            }
+           result = (int) defaultWidth;
         }
 
         return result;
@@ -118,7 +135,7 @@ public class CountDownView extends View {
         int baseLineY = (height - fontMetrics.bottom - fontMetrics.top) / 2;
         // 开始语
         mPaint.setColor(mTimeBackground);
-        mPaint.setTextSize(20);
+        mPaint.setTextSize(mTextSize);
         if (mShowStatus == 0) {
             canvas.drawText(sENDSOONSTATUS, startX, baseLineY, mPaint);
             headWidth = mPaint.measureText(sENDSOONSTATUS);
@@ -140,9 +157,9 @@ public class CountDownView extends View {
             mPaint.setColor(mTimeBackground);
             mPaint.setAntiAlias(true);
             mRectF.left = startX;
-            mRectF.top = 0;
+            mRectF.top = getPaddingTop();
             mRectF.right = endX;
-            mRectF.bottom = getHeight();
+            mRectF.bottom = getHeight() - getPaddingBottom();
             canvas.drawRoundRect(mRectF, 5, 5, mPaint);
             // 时间
             mPaint.setColor(mTimeTextColor);
@@ -205,5 +222,9 @@ public class CountDownView extends View {
      */
     public void setShowStatus(int status) {
         mShowStatus = status;
+    }
+
+    public void setDownCountSize(int textSize) {
+        mTextSize = textSize;
     }
 }
